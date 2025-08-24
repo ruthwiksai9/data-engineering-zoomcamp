@@ -1,5 +1,6 @@
 name: quickstart-ci
 on: [push, pull_request]
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -8,18 +9,24 @@ jobs:
         working-directory: quickstart
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: |
-          python -m venv .venv
-          . .venv/bin/activate
-          pip install -U pip
-          pip install -r requirements.txt
-      - run: . .venv/bin/activate && python scripts/create_sample_data.py
-      - run: . .venv/bin/activate && python scripts/seed_duckdb.py
-      - run: |
-          . .venv/bin/activate
+
+      - name: Install deps
+        run: |
+          python -m pip install -U pip
+          python -m pip install -r requirements.txt
+
+      - name: Generate sample data
+        run: python scripts/create_sample_data.py
+
+      - name: Seed DuckDB
+        run: python scripts/seed_duckdb.py
+
+      - name: dbt build
+        run: |
           cd dbt
           DBT_PROFILES_DIR=. dbt deps
-          DBT_PROFILES_DIR=. dbt build
+          DBT_PROFILES_DIR=. dbt build --no-use-colors
